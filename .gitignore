@@ -1,0 +1,5 @@
+model/*.json
+result/*.csv
+result/*.json
+result/*.png
+ohlcv_df_*.csv
