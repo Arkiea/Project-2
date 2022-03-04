@@ -53,6 +53,10 @@ def main():
     # print(len(combinations))
     target_col = 'test'
     for combination in ta_combinations:
+        name = '_'.join(sorted(combination))
+        file_path = os.path.join(root_dir, 'model', f"{name}.json")
+        if os.path.isfile(file_path):
+            continue
         # slice only the combination columns and drop all null values
         df = master_df[list(combination) + [target_col]].dropna()
         # Segment the features from the target
@@ -75,7 +79,6 @@ def main():
         # create the model (parameterise - have different ones)
         # Train the Xgboost model with scikit-learn compatible API:
         # model = xgb.XGBRegressor(n_estimators=100, max_depth=3, learning_rate=0.01) # https://mljar.com/blog/xgboost-save-load-python/
-        name = '_'.join(sorted(combination))
         model = xgb.XGBClassifier(
             n_estimators=1000,
             max_depth=100,
@@ -83,7 +86,6 @@ def main():
             learning_rate=0.01,
             random_state=1,
         )
-        file_path = os.path.join(root_dir, 'model', f"{name}.json")
         try:
             model.load_model(file_path)
         except (xgb.core.XGBoostError, AttributeError):
