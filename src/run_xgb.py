@@ -112,7 +112,7 @@ def main():
         # Add the actual returns to the DataFrame
         predictions_df['daily returns'] = master_df['returns']
         # Add the strategy returns to the DataFrame
-        predictions_df['model returns'] = predictions_df['daily returns'] * predictions_df['predictions']
+        predictions_df['model returns'] = predictions_df['daily returns'] * predictions_df['predictions'].shift()
         predictions_df.to_csv(os.path.join(root_dir, 'result', f"{name}.csv"))
 
         # plot the results
