@@ -118,7 +118,7 @@ def main():
         predictions_df.to_csv(os.path.join(root_dir, 'result', f"{name}.csv"))
 
         # plot the results
-        (1 + predictions_df[['daily returns', 'model returns']]).cumprod().plot()
+        (1 + predictions_df[['daily returns', 'model returns']]).cumprod().plot(title=' | '.join(sorted(combination)))
         plt.savefig(os.path.join(root_dir, 'result', f"{name}.png"), bbox_inches='tight')
 
 
