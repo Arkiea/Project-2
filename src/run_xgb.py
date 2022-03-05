@@ -54,7 +54,7 @@ def main():
     target_col = 'test'
     for combination in ta_combinations:
         name = '_'.join(sorted(combination))
-        file_path = os.path.join(root_dir, 'model', f"{name}.json")
+        file_path = os.path.join(root_dir, 'result', f"{name}.png")
         if os.path.isfile(file_path):
             continue
         # slice only the combination columns and drop all null values
