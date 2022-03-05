@@ -48,8 +48,8 @@ def main():
     # get all 3-column combinations from master_df.columns
     ta_columns = set(master_df.columns) - set(('open','high','low','close','volume','returns','test'))
     ta_combinations = list(itertools.combinations(ta_columns, 3))
-    # print(len(ta_combinations))
-    # 1330 combinations to try ... not including the models ...
+    # print(f"len(ta_combinations): {len(ta_combinations)}")
+    # 1771 combinations to try ... not including the models ...
     # print(len(combinations))
     target_col = 'test'
     for combination in ta_combinations:
