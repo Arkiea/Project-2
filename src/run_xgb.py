@@ -107,6 +107,8 @@ def main():
 
         # Calculate the model's returns
         predictions_df = pd.DataFrame(index=X_test.index)
+        # Add y_test to the DataFrame
+        predictions_df['y_test'] = y_test
         # Add the model predictions to the DataFrame
         predictions_df['predictions'] = predictions
         # Add the actual returns to the DataFrame
