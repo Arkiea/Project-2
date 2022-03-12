@@ -159,6 +159,16 @@ def add_TA_and_signal(ohlcv_df):
         ) * np.where(returns_df[target_col] > 0, 1, -1)
     # shift it back to normal because target_col is shifted -1
     ).shift()
+    # Load sentiment analysis
+    sentiment_df = pd.read_csv(
+        os.path.join(root_dir, 'Sentiment-analysis', 'BTC_2022-03-10_df.csv'),
+        index_col='date',
+        parse_dates=True,
+    )
+    # drop source text columns
+    sentiment_df.drop(columns=['BTC_headline','BTC_desc'], inplace=True)
+    # fill missing days with value of 0.0
+    sentiment_df = sentiment_df.asfreq('D').fillna(0.0)
 
     return pd.concat(
         [
@@ -172,6 +182,7 @@ def add_TA_and_signal(ohlcv_df):
             TA.DMI(ohlcv_df),
             TA.VWAP(ohlcv_df),
             TA.PIVOT_FIB(ohlcv_df),
+            sentiment_df,
         ],
         axis='columns',
     )
