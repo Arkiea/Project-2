@@ -6,6 +6,7 @@ import json
 import sys
 import subprocess 
 import find_best_model as fbm
+import json
 
 import pandas as pd
 import numpy as np
@@ -15,20 +16,16 @@ from binance import Client
 
 #Streamlit
 import streamlit as st
+from streamlit import caching
 from PIL import Image
 
 # machine learning imports
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report
-
 # ML models
 import xgboost as xgb
 from sklearn.linear_model import LogisticRegression
-
-#warnings
-import warnings
-warnings.filterwarnings("ignore")
 
 client = Client()
 fiat = 'USDT'
@@ -38,8 +35,6 @@ target_col = 'test'
 # number of weeks of test data
 num_weeks_test_data = 12
 
-
-   
 #Initialise streamlit variables
 title = st.empty()
 st_list = st.empty()
@@ -65,20 +60,20 @@ image8 = st.empty()
 image9 = st.empty()
 image10 = st.empty()
 
-
-
 def main():
+    # Set up master dataframe
     title.title('Crypto Trading Bot')
     stage = st_list.selectbox("Stage", ("Get Data", "Process Data", "Best Model"))
     file = open("crypto.csv", "r")
     crypto_df =  pd.read_csv(file)
     
+    #get parameters set from run_streamlit for Binance
     crypto = crypto_df['crypto'].iloc[0]
     interval = crypto_df["inter"].iloc[0]
-    start_str = crypto_df["start"].iloc[0]
-        
-    # Set up master dataframe
+    start_str = str(crypto_df["start"].iloc[0])
     today = (dt.datetime.today()).strftime('%Y-%m-%d')
+    
+    
     try:
         # load cached ohlcv_df from csv file
         ohlcv_df = pd.read_csv(
@@ -89,7 +84,7 @@ def main():
         )
     except FileNotFoundError:
         # download ohlcv data from binance
-        ohlcv_df = get_historical_data(crypto, interval)
+        ohlcv_df = get_historical_data(crypto, interval, start_str)
         # save the data to a csv
         ohlcv_df.to_csv(os.path.join(root_dir, f"ohlcv_df_{today}.csv"))
 
@@ -110,13 +105,14 @@ def main():
         y = df[target_col]
         X = df.drop(columns=target_col)
 
-        # Split training and test data
+       # Split training and test data
         end_training = (dt.datetime.today() - dt.timedelta(weeks=num_weeks_test_data)).strftime('%Y-%m-%d')
         X_train = X.loc[: end_training]
         X_test = X.loc[end_training:]
         y_train = y.loc[: end_training]
         y_test = y.loc[end_training:]
-
+        
+        
         # scale the data using StandardScaler
         X_scaler = StandardScaler()
         X_scaler.fit(X_train)
@@ -165,16 +161,15 @@ def main():
         count = ta_combinations.index(combination)
         count+=1
         loop = True
-        check(crypto, today, ohlcv_df, count, stage, loop)
+        check(crypto, today, ohlcv_df, count, stage, loop, start_str, interval)
         
-    check(crypto, today, ohlcv_df, len(ta_combinations), stage, False)
+    check(crypto, today, ohlcv_df, len(ta_combinations), stage, False, start_str, interval)
     
-        
-        
-def check(crypto, today, ohlcv_df, count, stage, loop):
+def check(crypto, today, ohlcv_df, count, stage, loop, start_str, interval):
         if stage == "Get Data":
             header.subheader(f"Ticker: {crypto}")
-            subheader.subheader(f"Prices from 5 years ago to {today}")
+            subheader.subheader(f"Prices from {start_str} to {today}")
+            process.write(f"Intervals: {interval}")
             dataframe_data.dataframe(ohlcv_df)
             line_chart.line_chart(ohlcv_df["close"])
                 
@@ -243,8 +238,6 @@ def check(crypto, today, ohlcv_df, count, stage, loop):
             name = Image.open(f"{root_dir}/result/{name}")
             image10.image(name, caption= '10' )
 
-                
-                
 
 def add_TA_and_signal(ohlcv_df):
     """ Add technical indicators and buy/sell signal """
@@ -289,6 +282,16 @@ def add_TA_and_signal(ohlcv_df):
         ) * np.where(returns_df[target_col] > 0, 1, -1)
     # shift it back to normal because target_col is shifted -1
     ).shift()
+    # Load sentiment analysis
+    sentiment_df = pd.read_csv(
+        os.path.join(root_dir, 'Sentiment-analysis', 'BTC_2022-03-10_df.csv'),
+        index_col='date',
+        parse_dates=True,
+    )
+    # drop source text columns
+    sentiment_df.drop(columns=['BTC_headline','BTC_desc'], inplace=True)
+    # fill missing days with value of 0.0
+    sentiment_df = sentiment_df.asfreq('D').fillna(0.0)
 
     return pd.concat(
         [
@@ -302,13 +305,37 @@ def add_TA_and_signal(ohlcv_df):
             TA.DMI(ohlcv_df),
             TA.VWAP(ohlcv_df),
             TA.PIVOT_FIB(ohlcv_df),
+            sentiment_df,
         ],
         axis='columns',
     )
 
 
+'''
+def get_historical_data(currency):
+    """ Download kline candlestick data from Binance """
+    klines = client.get_historical_klines(
+        currency + fiat,
+        Client.KLINE_INTERVAL_1DAY,
+        "5 year ago UTC"
+    )
+    # klines columns=['Open Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close Time', 'Quote asset volume', 'Number of trades', 'Taker buy base asset volume', 'Taker buy quote asset volume', 'Ignore'])
+    cols_ohlcv = ('open', 'high', 'low', 'close', 'volume')
+    df = pd.DataFrame((x[:6] for x in klines), columns=['timestamp', *cols_ohlcv])
+    df[[*cols_ohlcv]] = df[[*cols_ohlcv]].astype(float)
+    df['date'] = pd.to_datetime(df['timestamp'], unit='ms')
+    df.set_index('date', inplace=True)
+    df.drop(columns='timestamp', inplace=True)
 
-def get_historical_data(currency, interval): 
+    return df
+
+
+if __name__ == '__main__':
+    main()
+    '''
+    
+
+def get_historical_data(currency, interval, start_str): 
     klines = client.get_historical_klines(
         symbol = currency + fiat,
         interval = interval,
