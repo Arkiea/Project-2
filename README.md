@@ -1,4 +1,4 @@
-# Project-2
+# Machine Learning Trading Bot
 
 ## Installation
 ```bash
