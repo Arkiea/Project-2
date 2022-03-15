@@ -1,5 +1,7 @@
 # Machine Learning Trading Bot
 
+This project aims to train machine learning algorithms to produce profitable trading signals.
+
 ## Installation
 ```bash
 conda create -n project_2 python=3.9.7
