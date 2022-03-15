@@ -2,7 +2,7 @@ hvplot==0.7.3
 ipykernel==6.9.1
 numpy==1.22.2
 pandas==1.4.1
-scikit-learn==1.0.2
+scikit-learn==1.0
 matplotlib==3.5.1
 python-binance==1.0.15
 finta==1.3
